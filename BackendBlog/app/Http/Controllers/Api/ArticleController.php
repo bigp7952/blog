@@ -12,294 +12,501 @@ use Illuminate\Support\Str;
 class ArticleController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Liste des articles publics
+     * GET /api/v1/articles
      */
     public function index(Request $request)
     {
-        $query = Article::with(['user', 'tags'])
-                       ->published()
-                       ->public();
+        try {
+            $query = Article::with(['user', 'tags'])
+                           ->where('status', 'published')
+                           ->where('visibility', 'public');
 
-        // Filter by status for authenticated users
-        if ($request->user()) {
-            $query = Article::with(['user', 'tags']);
-            
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
+            // Filtres optionnels
+            if ($request->has('tag')) {
+                $query->whereHas('tags', function($q) use ($request) {
+                    $q->where('slug', $request->tag);
+                });
             }
-            
-            if ($request->has('visibility')) {
-                $query->where('visibility', $request->visibility);
+
+            if ($request->has('author')) {
+                $query->whereHas('user', function($q) use ($request) {
+                    $q->where('username', $request->author);
+                });
             }
+
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('excerpt', 'like', "%{$search}%")
+                      ->orWhere('content', 'like', "%{$search}%");
+                });
+            }
+
+            $articles = $query->orderBy('published_at', 'desc')
+                             ->paginate($request->get('limit', 10));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Articles récupérés avec succès',
+                'data' => $articles
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des articles',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('excerpt', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by tag
-        if ($request->has('tag')) {
-            $query->whereHas('tags', function($q) use ($request) {
-                $q->where('slug', $request->tag);
-            });
-        }
-
-        // Sort
-        $sortBy = $request->get('sort', 'published_at');
-        $sortOrder = $request->get('order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        $articles = $query->paginate(10);
-
-        return response()->json([
-            'success' => true,
-            'data' => $articles
-        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Affichage d'un article
+     * GET /api/v1/articles/{id}
+     */
+    public function show($id)
+    {
+        try {
+            $article = Article::with(['user', 'tags', 'comments.user', 'likes'])
+                             ->findOrFail($id);
+
+            // Vérification de la visibilité
+            if ($article->status !== 'published' || $article->visibility !== 'public') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article non accessible'
+                ], 403);
+            }
+
+            // Incrémentation des vues
+            $article->increment('views');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article récupéré avec succès',
+                'data' => $article
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Article non trouvé',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Création d'un article
+     * POST /api/v1/articles
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'excerpt' => 'required|string|max:500',
-            'content' => 'required|string',
-            'status' => 'required|in:draft,published,scheduled',
-            'visibility' => 'required|in:public,private',
-            'comments_enabled' => 'boolean',
-            'scheduled_at' => 'nullable|date|after:now',
-            'tags' => 'array',
-            'tags.*' => 'string|max:50',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $user = $request->user();
-        
-        $article = Article::create([
-            'user_id' => $user->id,
-            'title' => $request->title,
-            'slug' => Str::slug($request->title),
-            'excerpt' => $request->excerpt,
-            'content' => $request->content,
-            'status' => $request->status,
-            'visibility' => $request->visibility,
-            'comments_enabled' => $request->get('comments_enabled', true),
-            'published_at' => $request->status === 'published' ? now() : null,
-            'scheduled_at' => $request->scheduled_at,
-        ]);
-
-        // Handle tags
-        if ($request->has('tags')) {
-            $tagIds = [];
-            foreach ($request->tags as $tagName) {
-                $tag = Tag::firstOrCreate(
-                    ['name' => $tagName],
-                    ['slug' => Str::slug($tagName)]
-                );
-                $tagIds[] = $tag->id;
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
             }
-            $article->tags()->sync($tagIds);
-        }
 
-        $article->load(['user', 'tags']);
+            // Validation des données
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'excerpt' => 'required|string|max:500',
+                'content' => 'required|string',
+                'status' => 'required|in:draft,published',
+                'visibility' => 'required|in:public,private',
+                'comments_enabled' => 'boolean',
+                'featured' => 'boolean',
+                'tags' => 'array',
+                'tags.*' => 'string|max:50',
+                'published_at' => 'nullable|date',
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Article created successfully',
-            'data' => $article
-        ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, string $id)
-    {
-        $query = Article::with(['user', 'tags', 'comments.user']);
-        
-        // For authenticated users, show all articles
-        if ($request->user()) {
-            $article = $query->findOrFail($id);
-        } else {
-            // For public access, only show published and public articles
-            $article = $query->published()->public()->findOrFail($id);
-        }
-
-        // Increment views
-        $article->increment('views');
-
-        return response()->json([
-            'success' => true,
-            'data' => $article
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $article = Article::findOrFail($id);
-        
-        // Check if user owns the article
-        if ($request->user()->id !== $article->user_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'title' => 'sometimes|required|string|max:255',
-            'excerpt' => 'sometimes|required|string|max:500',
-            'content' => 'sometimes|required|string',
-            'status' => 'sometimes|required|in:draft,published,scheduled',
-            'visibility' => 'sometimes|required|in:public,private',
-            'comments_enabled' => 'boolean',
-            'scheduled_at' => 'nullable|date|after:now',
-            'tags' => 'array',
-            'tags.*' => 'string|max:50',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $updateData = $request->only([
-            'title', 'excerpt', 'content', 'status', 'visibility', 'comments_enabled', 'scheduled_at'
-        ]);
-
-        // Handle slug update if title changed
-        if ($request->has('title')) {
-            $updateData['slug'] = Str::slug($request->title);
-        }
-
-        // Handle published_at
-        if ($request->has('status') && $request->status === 'published' && !$article->published_at) {
-            $updateData['published_at'] = now();
-        }
-
-        $article->update($updateData);
-
-        // Handle tags
-        if ($request->has('tags')) {
-            $tagIds = [];
-            foreach ($request->tags as $tagName) {
-                $tag = Tag::firstOrCreate(
-                    ['name' => $tagName],
-                    ['slug' => Str::slug($tagName)]
-                );
-                $tagIds[] = $tag->id;
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de validation',
+                    'errors' => $validator->errors()
+                ], 422);
             }
-            $article->tags()->sync($tagIds);
-        }
 
-        $article->load(['user', 'tags']);
+            // Création de l'article
+            $article = Article::create([
+                'user_id' => $user->id,
+                'title' => $request->title,
+                'slug' => Str::slug($request->title),
+                'excerpt' => $request->excerpt,
+                'content' => $request->content,
+                'status' => $request->status,
+                'visibility' => $request->visibility,
+                'comments_enabled' => $request->get('comments_enabled', true),
+                'featured' => $request->get('featured', false),
+                'published_at' => $request->published_at ?? ($request->status === 'published' ? now() : null),
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Article updated successfully',
-            'data' => $article
-        ]);
-    }
+            // Gestion des tags
+            if ($request->has('tags')) {
+                $tagIds = [];
+                foreach ($request->tags as $tagName) {
+                    $tag = Tag::firstOrCreate(
+                        ['name' => $tagName],
+                        ['slug' => Str::slug($tagName), 'color' => '#3B82F6']
+                    );
+                    $tagIds[] = $tag->id;
+                }
+                $article->tags()->sync($tagIds);
+            }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, string $id)
-    {
-        $article = Article::findOrFail($id);
-        
-        // Check if user owns the article
-        if ($request->user()->id !== $article->user_id) {
+            $article->load(['user', 'tags']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article créé avec succès',
+                'data' => $article
+            ], 201);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
+                'message' => 'Erreur lors de la création de l\'article',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $article->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Article deleted successfully'
-        ]);
     }
 
     /**
-     * Like an article.
+     * Mise à jour d'un article
+     * PUT /api/v1/articles/{id}
      */
-    public function like(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $article = Article::findOrFail($id);
-        $user = $request->user();
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
 
-        $like = $article->likes()->where('user_id', $user->id)->first();
+            $article = Article::findOrFail($id);
 
-        if ($like) {
-            $like->delete();
-            $article->decrement('likes_count');
-            $message = 'Article unliked';
-        } else {
-            $article->likes()->create(['user_id' => $user->id]);
+            // Vérification des permissions
+            if ($article->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé à modifier cet article'
+                ], 403);
+            }
+
+            // Validation des données
+            $validator = Validator::make($request->all(), [
+                'title' => 'sometimes|required|string|max:255',
+                'excerpt' => 'sometimes|required|string|max:500',
+                'content' => 'sometimes|required|string',
+                'status' => 'sometimes|required|in:draft,published',
+                'visibility' => 'sometimes|required|in:public,private',
+                'comments_enabled' => 'boolean',
+                'featured' => 'boolean',
+                'tags' => 'array',
+                'tags.*' => 'string|max:50',
+                'published_at' => 'nullable|date',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de validation',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Mise à jour de l'article
+            $updateData = $request->only([
+                'title', 'excerpt', 'content', 'status', 'visibility', 
+                'comments_enabled', 'featured', 'published_at'
+            ]);
+
+            if ($request->has('title')) {
+                $updateData['slug'] = Str::slug($request->title);
+            }
+
+            if ($request->has('status') && $request->status === 'published' && !$article->published_at) {
+                $updateData['published_at'] = now();
+            }
+
+            $article->update($updateData);
+
+            // Gestion des tags
+            if ($request->has('tags')) {
+                $tagIds = [];
+                foreach ($request->tags as $tagName) {
+                    $tag = Tag::firstOrCreate(
+                        ['name' => $tagName],
+                        ['slug' => Str::slug($tagName), 'color' => '#3B82F6']
+                    );
+                    $tagIds[] = $tag->id;
+                }
+                $article->tags()->sync($tagIds);
+            }
+
+            $article->load(['user', 'tags']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article mis à jour avec succès',
+                'data' => $article
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour de l\'article',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Suppression d'un article
+     * DELETE /api/v1/articles/{id}
+     */
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $article = Article::findOrFail($id);
+
+            // Vérification des permissions
+            if ($article->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé à supprimer cet article'
+                ], 403);
+            }
+
+            $article->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression de l\'article',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Like d'un article
+     * POST /api/v1/articles/{id}/like
+     */
+    public function like(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $article = Article::findOrFail($id);
+
+            // Vérification si déjà liké
+            $existingLike = $user->likes()->where('article_id', $id)->first();
+            
+            if ($existingLike) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article déjà liké'
+                ], 400);
+            }
+
+            // Création du like
+            $user->likes()->create([
+                'article_id' => $id
+            ]);
+
+            // Mise à jour du compteur
             $article->increment('likes_count');
-            $message = 'Article liked';
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => [
-                'likes_count' => $article->fresh()->likes_count
-            ]
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Article liké avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du like',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Bookmark an article.
+     * Unlike d'un article
+     * POST /api/v1/articles/{id}/unlike
      */
-    public function bookmark(Request $request, string $id)
+    public function unlike(Request $request, $id)
     {
-        $article = Article::findOrFail($id);
-        $user = $request->user();
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
 
-        $bookmark = $user->bookmarks()->where('article_id', $article->id)->first();
+            $article = Article::findOrFail($id);
 
-        if ($bookmark) {
-            $bookmark->delete();
-            $article->decrement('bookmarks_count');
-            $message = 'Article unbookmarked';
-        } else {
-            $user->bookmarks()->create(['article_id' => $article->id]);
-            $article->increment('bookmarks_count');
-            $message = 'Article bookmarked';
+            // Suppression du like
+            $like = $user->likes()->where('article_id', $id)->first();
+            
+            if (!$like) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article non liké'
+                ], 400);
+            }
+
+            $like->delete();
+
+            // Mise à jour du compteur
+            $article->decrement('likes_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Like supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression du like',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => [
-                'bookmarks_count' => $article->fresh()->bookmarks_count
-            ]
-        ]);
+    /**
+     * Signet d'un article
+     * POST /api/v1/articles/{id}/bookmark
+     */
+    public function bookmark(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $article = Article::findOrFail($id);
+
+            // Vérification si déjà en signet
+            $existingBookmark = $user->bookmarks()->where('article_id', $id)->first();
+            
+            if ($existingBookmark) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article déjà en signet'
+                ], 400);
+            }
+
+            // Création du signet
+            $user->bookmarks()->create([
+                'article_id' => $id
+            ]);
+
+            // Mise à jour du compteur
+            $article->increment('bookmarks_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Article ajouté aux signets avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'ajout aux signets',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Suppression d'un signet
+     * POST /api/v1/articles/{id}/unbookmark
+     */
+    public function unbookmark(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $article = Article::findOrFail($id);
+
+            // Suppression du signet
+            $bookmark = $user->bookmarks()->where('article_id', $id)->first();
+            
+            if (!$bookmark) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article non en signet'
+                ], 400);
+            }
+
+            $bookmark->delete();
+
+            // Mise à jour du compteur
+            $article->decrement('bookmarks_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Signet supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression du signet',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

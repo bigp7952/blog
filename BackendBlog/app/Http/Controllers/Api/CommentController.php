@@ -3,180 +3,348 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Article;
 use App\Models\Comment;
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Liste des commentaires d'un article
+     * GET /api/v1/articles/{articleId}/comments
      */
-    public function index(Request $request, string $articleId)
+    public function index(Request $request, $articleId)
     {
-        $article = Article::findOrFail($articleId);
-        
-        $comments = $article->comments()
-                           ->with(['user', 'replies.user'])
-                           ->topLevel()
-                           ->approved()
-                           ->orderBy('created_at', 'desc')
-                           ->get();
+        try {
+            $article = Article::findOrFail($articleId);
 
-        return response()->json([
-            'success' => true,
-            'data' => $comments
-        ]);
+            // Vérification de la visibilité
+            if ($article->status !== 'published' || $article->visibility !== 'public') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article non accessible'
+                ], 403);
+            }
+
+            $comments = Comment::with(['user', 'replies.user'])
+                             ->where('article_id', $articleId)
+                             ->whereNull('parent_id')
+                             ->orderBy('created_at', 'desc')
+                             ->paginate(10);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaires récupérés avec succès',
+                'data' => $comments
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des commentaires',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Création d'un commentaire
+     * POST /api/v1/articles/{articleId}/comments
      */
-    public function store(Request $request, string $articleId)
+    public function store(Request $request, $articleId)
     {
-        $article = Article::findOrFail($articleId);
-        
-        // Check if comments are enabled
-        if (!$article->comments_enabled) {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $article = Article::findOrFail($articleId);
+
+            // Vérification si les commentaires sont autorisés
+            if (!$article->comments_enabled) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les commentaires sont désactivés pour cet article'
+                ], 403);
+            }
+
+            // Validation des données
+            $validator = Validator::make($request->all(), [
+                'content' => 'required|string|max:1000',
+                'parent_id' => 'nullable|exists:comments,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de validation',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Création du commentaire
+            $comment = Comment::create([
+                'user_id' => $user->id,
+                'article_id' => $articleId,
+                'content' => $request->content,
+                'parent_id' => $request->parent_id,
+            ]);
+
+            // Mise à jour du compteur
+            $article->increment('comments_count');
+
+            $comment->load(['user', 'replies.user']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaire créé avec succès',
+                'data' => $comment
+            ], 201);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Comments are disabled for this article'
-            ], 403);
+                'message' => 'Erreur lors de la création du commentaire',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:1000',
-            'parent_id' => 'nullable|exists:comments,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $comment = Comment::create([
-            'article_id' => $article->id,
-            'user_id' => $request->user()->id,
-            'parent_id' => $request->parent_id,
-            'content' => $request->content,
-        ]);
-
-        // Increment comments count
-        $article->increment('comments_count');
-
-        $comment->load('user');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment added successfully',
-            'data' => $comment
-        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Affichage d'un commentaire
+     * GET /api/v1/comments/{id}
      */
-    public function show(string $id)
+    public function show($id)
     {
-        $comment = Comment::with(['user', 'replies.user'])->findOrFail($id);
+        try {
+            $comment = Comment::with(['user', 'article', 'replies.user'])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $comment
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaire récupéré avec succès',
+                'data' => $comment
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Commentaire non trouvé',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Mise à jour d'un commentaire
+     * PUT /api/v1/comments/{id}
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $comment = Comment::findOrFail($id);
-        
-        // Check if user owns the comment
-        if ($request->user()->id !== $comment->user_id) {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $comment = Comment::findOrFail($id);
+
+            // Vérification des permissions
+            if ($comment->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé à modifier ce commentaire'
+                ], 403);
+            }
+
+            // Validation des données
+            $validator = Validator::make($request->all(), [
+                'content' => 'required|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de validation',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Mise à jour du commentaire
+            $comment->update([
+                'content' => $request->content,
+            ]);
+
+            $comment->load(['user', 'replies.user']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaire mis à jour avec succès',
+                'data' => $comment
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
+                'message' => 'Erreur lors de la mise à jour du commentaire',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $comment->update([
-            'content' => $request->content,
-        ]);
-
-        $comment->load('user');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment updated successfully',
-            'data' => $comment
-        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Suppression d'un commentaire
+     * DELETE /api/v1/comments/{id}
      */
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, $id)
     {
-        $comment = Comment::findOrFail($id);
-        
-        // Check if user owns the comment or is admin
-        if ($request->user()->id !== $comment->user_id) {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $comment = Comment::findOrFail($id);
+
+            // Vérification des permissions
+            if ($comment->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé à supprimer ce commentaire'
+                ], 403);
+            }
+
+            // Suppression des réponses si c'est un commentaire parent
+            if ($comment->parent_id === null) {
+                Comment::where('parent_id', $comment->id)->delete();
+            }
+
+            // Mise à jour du compteur de l'article
+            $comment->article->decrement('comments_count');
+
+            $comment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaire supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
-            ], 403);
+                'message' => 'Erreur lors de la suppression du commentaire',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Decrement comments count
-        $comment->article->decrement('comments_count');
-
-        $comment->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Comment deleted successfully'
-        ]);
     }
 
     /**
-     * Like a comment.
+     * Like d'un commentaire
+     * POST /api/v1/comments/{id}/like
      */
-    public function like(Request $request, string $id)
+    public function like(Request $request, $id)
     {
-        $comment = Comment::findOrFail($id);
-        $user = $request->user();
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
 
-        $like = $comment->likes()->where('user_id', $user->id)->first();
+            $comment = Comment::findOrFail($id);
 
-        if ($like) {
+            // Vérification si déjà liké
+            $existingLike = $user->likes()->where('comment_id', $id)->first();
+            
+            if ($existingLike) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Commentaire déjà liké'
+                ], 400);
+            }
+
+            // Création du like
+            $user->likes()->create([
+                'comment_id' => $id
+            ]);
+
+            // Mise à jour du compteur
+            $comment->increment('likes_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Commentaire liké avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du like',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Unlike d'un commentaire
+     * POST /api/v1/comments/{id}/unlike
+     */
+    public function unlike(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non authentifié'
+                ], 401);
+            }
+
+            $comment = Comment::findOrFail($id);
+
+            // Suppression du like
+            $like = $user->likes()->where('comment_id', $id)->first();
+            
+            if (!$like) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Commentaire non liké'
+                ], 400);
+            }
+
             $like->delete();
-            $message = 'Comment unliked';
-        } else {
-            $comment->likes()->create(['user_id' => $user->id]);
-            $message = 'Comment liked';
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => $message
-        ]);
+            // Mise à jour du compteur
+            $comment->decrement('likes_count');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Like supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression du like',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

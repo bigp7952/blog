@@ -2,215 +2,331 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Article;
 use App\Models\User;
 use App\Models\Tag;
+use Illuminate\Support\Str;
 
 class ArticleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $users = User::all();
         $tags = Tag::all();
 
+        if ($users->isEmpty() || $tags->isEmpty()) {
+            return;
+        }
+
         $articles = [
             [
-                'title' => 'Les Tendances du Développement Web en 2025',
-                'excerpt' => 'Découvrez les technologies qui vont révolutionner le développement web cette année. De l\'IA générative aux frameworks modernes, explorez l\'avenir du développement.',
-                'content' => 'Le développement web évolue rapidement et 2025 promet d\'être une année riche en innovations. Dans cet article, nous explorons les tendances qui vont façonner l\'avenir du développement web.
+                'title' => 'Guide Complet de React 18 : Nouvelles Fonctionnalités',
+                'excerpt' => 'Découvrez les nouvelles fonctionnalités de React 18, incluant le rendu concurrent, les Suspense améliorés et les hooks optimisés.',
+                'content' => 'React 18 apporte de nombreuses améliorations significatives qui révolutionnent la façon dont nous construisons des applications React modernes.
 
-## 1. L\'Intelligence Artificielle Générative
+## Rendu Concurrent
 
-L\'IA générative transforme la façon dont nous développons des applications web. Des outils comme GitHub Copilot et ChatGPT révolutionnent l\'écriture de code, permettant aux développeurs de créer plus rapidement et efficacement.
+Le rendu concurrent est l\'une des fonctionnalités les plus importantes de React 18. Il permet à React de préparer plusieurs versions de l\'interface utilisateur en même temps, rendant les applications plus réactives.
 
-## 2. Les Frameworks Modernes
+### Avantages du rendu concurrent :
+- **Interruption du rendu** : React peut interrompre le rendu pour traiter des mises à jour plus prioritaires
+- **Amélioration de la fluidité** : Les interactions utilisateur restent fluides même pendant les mises à jour
+- **Meilleure gestion des états** : Évite les états incohérents
 
-React 18, Vue 3, et Angular 17 continuent d\'évoluer avec de nouvelles fonctionnalités qui améliorent les performances et l\'expérience développeur.
+## Suspense Amélioré
 
-## 3. Le Développement Full-Stack
+React 18 améliore considérablement le composant Suspense, permettant de l\'utiliser avec le rendu côté serveur (SSR).
 
-Les développeurs full-stack sont de plus en plus recherchés, maîtrisant à la fois le frontend et le backend pour créer des applications complètes.
+## Hooks Optimisés
+
+Plusieurs hooks ont été optimisés pour de meilleures performances :
+- `useId` : Génère des IDs uniques
+- `useDeferredValue` : Retarde les mises à jour non critiques
+- `useTransition` : Marque les mises à jour comme non urgentes
 
 ## Conclusion
 
-Le développement web en 2025 sera marqué par l\'innovation, l\'efficacité et la créativité. Restez à jour avec ces tendances pour rester compétitif dans ce domaine en constante évolution.',
+React 18 représente une étape majeure dans l\'évolution de React, offrant de meilleures performances et une expérience développeur améliorée.',
                 'status' => 'published',
                 'visibility' => 'public',
-                'featured' => true,
-                'views' => 1234,
-                'likes_count' => 89,
-                'comments_count' => 18,
-                'bookmarks_count' => 45,
-                'published_at' => now()->subDays(1),
-                'tags' => ['Web Dev', 'Tendances', '2025', 'React'],
+                'published_at' => now()->subDays(5),
+                'tags' => ['React', 'JavaScript', 'Tutorial', 'Frontend']
             ],
             [
-                'title' => 'Guide Complet de React 18 : Nouvelles Fonctionnalités',
-                'excerpt' => 'Maîtrisez les nouvelles fonctionnalités de React 18 avec des exemples pratiques et des cas d\'usage concrets.',
-                'content' => 'React 18 apporte de nombreuses améliorations et nouvelles fonctionnalités qui changent la façon dont nous développons des applications React.
+                'title' => 'Laravel 10 : Les Meilleures Pratiques pour un Code Propre',
+                'excerpt' => 'Explorez les meilleures pratiques pour écrire du code Laravel propre, maintenable et performant.',
+                'content' => 'Laravel 10 continue d\'évoluer avec de nouvelles fonctionnalités et améliorations. Voici les meilleures pratiques pour tirer le meilleur parti de ce framework.
 
-## Les Nouvelles Fonctionnalités
+## Architecture MVC Respectée
 
-### 1. Concurrent Rendering
-Le rendu concurrent permet à React d\'interrompre le rendu pour traiter des mises à jour plus importantes.
+Respectez toujours l\'architecture MVC de Laravel. Cette approche garantit une séparation claire des responsabilités et facilite la maintenance du code.
 
-### 2. Automatic Batching
-React 18 améliore le batching automatique pour de meilleures performances.
+### Modèles (Models)
+Les modèles représentent vos données et contiennent la logique métier. Utilisez les relations Eloquent pour simplifier vos requêtes.
 
-### 3. Suspense Amélioré
-Le composant Suspense est maintenant plus puissant et flexible.
+### Contrôleurs (Controllers)
+Les contrôleurs gèrent la logique de présentation et coordonnent entre les modèles et les vues.
 
-## Exemples Pratiques
+## Utilisation des Form Requests
 
-Voici comment utiliser ces nouvelles fonctionnalités dans vos projets React.',
+Utilisez les Form Requests pour la validation. Cette approche centralise la logique de validation et améliore la lisibilité du code.
+
+## Gestion des Relations
+
+Optimisez vos requêtes avec les relations :
+- Évitez le problème N+1 avec `with()`
+- Utilisez les requêtes optimisées avec `withCount()`
+
+## Conclusion
+
+Ces pratiques vous aideront à maintenir un code Laravel propre et performant.',
                 'status' => 'published',
                 'visibility' => 'public',
-                'featured' => false,
-                'views' => 2156,
-                'likes_count' => 156,
-                'comments_count' => 32,
-                'bookmarks_count' => 78,
-                'published_at' => now()->subDays(2),
-                'tags' => ['React', 'JavaScript', 'Tutorial', 'Frontend'],
-            ],
-            [
-                'title' => 'L\'Art de la Rédaction Technique : Conseils pour Écrire des Articles de Qualité',
-                'excerpt' => 'Apprenez les techniques essentielles pour rédiger des articles techniques engageants et informatifs qui captent l\'attention de votre audience.',
-                'content' => 'La rédaction technique est un art qui nécessite de la pratique et de la méthode. Voici nos conseils pour créer du contenu de qualité.
-
-## Structure de l\'Article
-
-### 1. Introduction Captivante
-Commencez par une introduction qui pose le problème et annonce la solution.
-
-### 2. Développement Structuré
-Organisez votre contenu en sections logiques avec des sous-titres clairs.
-
-### 3. Conclusion Actionnable
-Terminez par une conclusion qui résume les points clés et propose des actions concrètes.
-
-## Conseils d\'Écriture
-
-- Utilisez un langage clair et accessible
-- Illustrez vos propos avec des exemples concrets
-- Structurez votre contenu avec des listes et des tableaux
-- Relisez et corrigez votre texte avant publication',
-                'status' => 'published',
-                'visibility' => 'public',
-                'featured' => false,
-                'views' => 987,
-                'likes_count' => 67,
-                'comments_count' => 12,
-                'bookmarks_count' => 34,
                 'published_at' => now()->subDays(3),
-                'tags' => ['Tutorial', 'Écriture', 'Conseils'],
+                'tags' => ['Laravel', 'PHP', 'Best Practices', 'Backend']
             ],
             [
-                'title' => 'TypeScript vs JavaScript : Quand Utiliser Chacun ?',
-                'excerpt' => 'Comparaison détaillée entre TypeScript et JavaScript pour vous aider à choisir la meilleure solution pour votre projet.',
-                'content' => 'TypeScript et JavaScript sont deux technologies complémentaires mais distinctes. Voici comment choisir entre elles.
+                'title' => 'TypeScript vs JavaScript : Quand Faire la Transition ?',
+                'excerpt' => 'Analyse comparative entre TypeScript et JavaScript pour vous aider à décider quand migrer vos projets.',
+                'content' => 'La question de migrer de JavaScript vers TypeScript se pose souvent dans les projets modernes. Voici une analyse complète pour vous aider à prendre la bonne décision.
 
-## TypeScript : Les Avantages
+## Avantages de TypeScript
 
 ### Typage Statique
-TypeScript offre un système de types qui aide à détecter les erreurs avant l\'exécution.
+TypeScript apporte le typage statique à JavaScript, réduisant considérablement les erreurs de type.
 
 ### Meilleure IntelliSense
-L\'autocomplétion et la documentation intégrée améliorent l\'expérience développeur.
+L\'autocomplétion et la détection d\'erreurs sont considérablement améliorées.
 
 ### Refactoring Sécurisé
-Les types facilitent la refactorisation du code en toute sécurité.
+Le refactoring devient plus sûr avec TypeScript.
 
-## JavaScript : Quand l\'Utiliser
+## Inconvénients de TypeScript
 
-### Prototypage Rapide
-JavaScript reste idéal pour les prototypes et les projets rapides.
+### Courbe d\'Apprentissage
+- Syntaxe plus complexe
+- Concepts de génériques et d\'interfaces
+- Configuration initiale
 
-### Écosystème Vaste
-L\'écosystème JavaScript est immense et bien établi.
+### Taille du Bundle
+- Code JavaScript généré plus volumineux
+- Temps de compilation
+
+## Quand Migrer vers TypeScript ?
+
+### Migrez si :
+- Votre équipe est prête à apprendre
+- Le projet est de taille moyenne à grande
+- La maintenance à long terme est importante
+- Vous travaillez en équipe
+
+### Restez en JavaScript si :
+- Projet simple et rapide
+- Équipe non familière avec TypeScript
+- Contraintes de temps strictes
 
 ## Conclusion
 
-Choisissez TypeScript pour les projets complexes et JavaScript pour les projets simples ou rapides.',
+TypeScript est un excellent choix pour la plupart des projets modernes, mais la décision doit être prise en fonction de votre contexte spécifique.',
                 'status' => 'published',
                 'visibility' => 'public',
-                'featured' => false,
-                'views' => 1456,
-                'likes_count' => 98,
-                'comments_count' => 25,
-                'bookmarks_count' => 56,
-                'published_at' => now()->subDays(4),
-                'tags' => ['TypeScript', 'JavaScript', 'Comparaison', 'Tutorial'],
+                'published_at' => now()->subDays(1),
+                'tags' => ['TypeScript', 'JavaScript', 'Tutorial', 'Frontend']
             ],
             [
                 'title' => 'Optimisation des Performances Web : Techniques Avancées',
-                'excerpt' => 'Découvrez les techniques avancées pour optimiser les performances de vos applications web et améliorer l\'expérience utilisateur.',
-                'content' => 'L\'optimisation des performances web est cruciale pour offrir une excellente expérience utilisateur.
+                'excerpt' => 'Découvrez les techniques avancées pour optimiser les performances de vos applications web.',
+                'content' => 'L\'optimisation des performances web est cruciale pour offrir une excellente expérience utilisateur. Voici les techniques avancées que vous devez connaître.
 
-## Techniques d\'Optimisation
+## Optimisation des Images
 
-### 1. Lazy Loading
-Chargez les ressources seulement quand elles sont nécessaires.
+### Formats Modernes
+Utilisez des formats d\'image modernes comme WebP et AVIF pour réduire la taille des fichiers.
 
-### 2. Code Splitting
-Divisez votre code en chunks plus petits pour un chargement plus rapide.
+### Lazy Loading
+Implémentez le lazy loading pour charger les images uniquement quand elles sont nécessaires.
 
-### 3. Optimisation des Images
-Utilisez des formats modernes comme WebP et optimisez la taille des images.
+## Optimisation JavaScript
 
-### 4. Mise en Cache
-Implémentez des stratégies de cache efficaces pour réduire les requêtes serveur.
+### Code Splitting
+Divisez votre code JavaScript en chunks plus petits pour améliorer les temps de chargement.
 
-## Outils de Mesure
+### Tree Shaking
+Éliminez le code mort de votre bundle final.
 
-- Lighthouse pour l\'audit des performances
-- WebPageTest pour des tests détaillés
-- Chrome DevTools pour le debugging
+## Optimisation CSS
+
+### Critical CSS
+Incluez le CSS critique inline pour améliorer le First Contentful Paint.
+
+### CSS Purging
+Supprimez le CSS non utilisé de votre build final.
+
+## Optimisation des Requêtes
+
+### Requêtes Optimisées
+Utilisez les relations Eloquent pour éviter les requêtes N+1.
+
+### Mise en Cache
+Implémentez la mise en cache pour les requêtes coûteuses.
 
 ## Conclusion
 
-L\'optimisation des performances est un processus continu qui nécessite une attention constante.',
+L\'optimisation des performances est un processus continu qui nécessite une approche holistique.',
                 'status' => 'published',
                 'visibility' => 'public',
-                'featured' => false,
-                'views' => 876,
-                'likes_count' => 54,
-                'comments_count' => 8,
-                'bookmarks_count' => 23,
-                'published_at' => now()->subDays(5),
-                'tags' => ['Performance', 'Optimisation', 'Web Dev', 'Tutorial'],
+                'published_at' => now()->subHours(12),
+                'tags' => ['Performance', 'Optimisation', 'Web Dev', 'Best Practices']
             ],
+            [
+                'title' => 'Introduction à l\'Intelligence Artificielle pour les Développeurs',
+                'excerpt' => 'Découvrez comment intégrer l\'IA dans vos applications web modernes avec des exemples pratiques.',
+                'content' => 'L\'Intelligence Artificielle transforme le développement web. Voici comment intégrer l\'IA dans vos applications.
+
+## Types d\'IA pour le Web
+
+### Machine Learning
+Le machine learning permet aux applications d\'apprendre et de s\'améliorer automatiquement.
+
+### Deep Learning
+Le deep learning utilise des réseaux de neurones pour résoudre des problèmes complexes.
+
+## Intégration dans les Applications Web
+
+### API REST pour l\'IA
+Créez des endpoints API pour exposer vos modèles d\'IA.
+
+### Frontend avec IA
+Intégrez des modèles d\'IA directement dans le navigateur avec TensorFlow.js.
+
+## Cas d\'Usage Pratiques
+
+### 1. Recommandations
+Implémentez des systèmes de recommandation personnalisés.
+
+### 2. Analyse de Sentiment
+Analysez le sentiment des commentaires et avis utilisateurs.
+
+### 3. Chatbot Intelligent
+Créez des chatbots capables de comprendre et répondre aux utilisateurs.
+
+## Outils et Frameworks
+
+### Backend
+- **Python** : TensorFlow, PyTorch, scikit-learn
+- **Node.js** : TensorFlow.js, Brain.js
+- **PHP** : PHP-ML, Rubix ML
+
+### Frontend
+- **TensorFlow.js** : IA côté client
+- **ML5.js** : Bibliothèque simplifiée
+- **OpenAI API** : Intégration GPT
+
+## Conclusion
+
+L\'intégration de l\'IA dans les applications web ouvre de nouvelles possibilités. Commencez par des cas d\'usage simples et évoluez progressivement.',
+                'status' => 'published',
+                'visibility' => 'public',
+                'published_at' => now()->subHours(6),
+                'tags' => ['AI', 'Machine Learning', 'Python', 'JavaScript']
+            ],
+            [
+                'title' => 'Sécurité Web : Protéger vos Applications des Vulnérabilités',
+                'excerpt' => 'Guide complet sur la sécurité web : authentification, autorisation, et protection contre les attaques courantes.',
+                'content' => 'La sécurité web est un aspect crucial du développement moderne. Voici un guide complet pour protéger vos applications.
+
+## Authentification Sécurisée
+
+### JWT avec Refresh Tokens
+Implémentez un système d\'authentification robuste avec des tokens JWT et des refresh tokens.
+
+### Hachage des Mots de Passe
+Utilisez des algorithmes de hachage sécurisés comme bcrypt.
+
+## Protection CSRF
+
+### Laravel
+Laravel inclut une protection CSRF automatique avec ses middlewares.
+
+### React
+Implémentez la protection CSRF côté client avec des tokens.
+
+## Protection XSS
+
+### Échappement des Données
+Échappez toujours les données utilisateur avant de les afficher.
+
+### Validation et Nettoyage
+Validez et nettoyez toutes les entrées utilisateur.
+
+## Protection SQL Injection
+
+### Requêtes Préparées
+Utilisez toujours des requêtes préparées ou l\'ORM.
+
+### Validation des Entrées
+Validez strictement toutes les entrées utilisateur.
+
+## Headers de Sécurité
+
+Configurez les headers de sécurité appropriés pour protéger votre application.
+
+## Rate Limiting
+
+Implémentez la limitation du taux de requêtes pour prévenir les attaques par déni de service.
+
+## Audit de Sécurité
+
+### Outils d\'Audit
+Utilisez des outils comme OWASP ZAP pour auditer votre application.
+
+### Tests de Sécurité
+Implémentez des tests automatisés pour vérifier la sécurité.
+
+## Bonnes Pratiques
+
+### 1. Principe du Moindre Privilège
+Accordez uniquement les permissions nécessaires.
+
+### 2. Logging et Monitoring
+Surveillez les événements de sécurité.
+
+### 3. Mise à Jour Régulière
+Maintenez vos dépendances à jour.
+
+## Conclusion
+
+La sécurité web nécessite une approche multicouche. Implémentez ces mesures progressivement et restez informé des dernières menaces.',
+                'status' => 'published',
+                'visibility' => 'public',
+                'published_at' => now()->subHours(2),
+                'tags' => ['Sécurité', 'Authentication', 'Best Practices', 'Web Dev']
+            ]
         ];
 
-        foreach ($articles as $index => $articleData) {
+        foreach ($articles as $articleData) {
             $user = $users->random();
-            $tags = $articleData['tags'];
+            $articleTags = $articleData['tags'];
             unset($articleData['tags']);
 
             $article = Article::create([
+                ...$articleData,
                 'user_id' => $user->id,
-                'title' => $articleData['title'],
-                'slug' => \Illuminate\Support\Str::slug($articleData['title']),
-                'excerpt' => $articleData['excerpt'],
-                'content' => $articleData['content'],
-                'status' => $articleData['status'],
-                'visibility' => $articleData['visibility'],
-                'featured' => $articleData['featured'],
-                'views' => $articleData['views'],
-                'likes_count' => $articleData['likes_count'],
-                'comments_count' => $articleData['comments_count'],
-                'bookmarks_count' => $articleData['bookmarks_count'],
-                'published_at' => $articleData['published_at'],
+                'slug' => Str::slug($articleData['title']),
             ]);
 
-            // Attach tags
-            $tagIds = Tag::whereIn('name', $tags)->pluck('id');
+            // Attacher les tags
+            $tagIds = $tags->whereIn('name', $articleTags)->pluck('id');
             $article->tags()->attach($tagIds);
+
+            // Mettre à jour les compteurs
+            $article->update([
+                'views' => rand(50, 2000),
+                'likes_count' => rand(10, 500),
+                'comments_count' => rand(0, 100),
+                'bookmarks_count' => rand(5, 200),
+            ]);
         }
     }
 }

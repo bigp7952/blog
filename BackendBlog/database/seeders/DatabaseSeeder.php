@@ -16,6 +16,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             TagSeeder::class,
             ArticleSeeder::class,
+            CommentSeeder::class,
+            FriendSeeder::class,
+            LikeSeeder::class,
+            BookmarkSeeder::class,
+            NotificationSeeder::class,
         ]);
     }
 }

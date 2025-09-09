@@ -2,88 +2,103 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Create admin user
-        User::create([
-            'name' => 'Admin User',
-            'username' => 'admin',
-            'email' => 'admin@sunublog.com',
-            'phone' => '+33123456789',
-            'password' => Hash::make('password'),
-            'bio' => 'Administrateur de SunuBlog',
-            'avatar' => '/api/placeholder/64/64',
-            'is_online' => true,
-            'last_seen' => now(),
-        ]);
-
-        // Create test users
         $users = [
             [
-                'name' => 'Alice Martin',
-                'username' => 'alice_dev',
-                'email' => 'alice@example.com',
-                'phone' => '+33123456790',
-                'password' => Hash::make('password'),
-                'bio' => 'Développeuse Frontend passionnée par React et TypeScript',
-                'avatar' => '/api/placeholder/64/64',
+                'name' => 'Aminata Diop',
+                'username' => 'aminata_dev',
+                'email' => 'aminata.diop@example.com',
+                'phone' => '+221701234567',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Développeuse Full-Stack passionnée par React et Laravel. Originaire de Dakar.',
                 'is_online' => true,
-                'last_seen' => now(),
+                'email_verified_at' => now(),
             ],
             [
-                'name' => 'Bob Johnson',
-                'username' => 'bob_writer',
-                'email' => 'bob@example.com',
-                'phone' => '+33123456791',
-                'password' => Hash::make('password'),
-                'bio' => 'Tech Lead & Bloggeur technique',
-                'avatar' => '/api/placeholder/64/64',
+                'name' => 'Moussa Fall',
+                'username' => 'moussa_writer',
+                'email' => 'moussa.fall@example.com',
+                'phone' => '+221701234568',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Tech Lead et blogueur technique. Spécialisé en architecture logicielle.',
                 'is_online' => false,
-                'last_seen' => now()->subHours(2),
+                'email_verified_at' => now(),
             ],
             [
-                'name' => 'Charlie Brown',
-                'username' => 'charlie_design',
-                'email' => 'charlie@example.com',
-                'phone' => '+33123456792',
-                'password' => Hash::make('password'),
-                'bio' => 'Designer UI/UX créatif',
-                'avatar' => '/api/placeholder/64/64',
+                'name' => 'Fatou Sarr',
+                'username' => 'fatou_ux',
+                'email' => 'fatou.sarr@example.com',
+                'phone' => '+221701234569',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'UX/UI Designer créative. Passionnée par l\'expérience utilisateur et le design thinking.',
                 'is_online' => true,
-                'last_seen' => now(),
+                'email_verified_at' => now(),
             ],
             [
-                'name' => 'Diana Prince',
-                'username' => 'diana_backend',
-                'email' => 'diana@example.com',
-                'phone' => '+33123456793',
-                'password' => Hash::make('password'),
-                'bio' => 'Développeuse Backend spécialisée en Laravel',
-                'avatar' => '/api/placeholder/64/64',
+                'name' => 'Ibrahima Ndiaye',
+                'username' => 'ibrahima_backend',
+                'email' => 'ibrahima.ndiaye@example.com',
+                'phone' => '+221701234570',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Développeur Backend spécialisé en Laravel et Node.js. Expert en bases de données.',
                 'is_online' => false,
-                'last_seen' => now()->subDays(1),
+                'email_verified_at' => now(),
             ],
             [
-                'name' => 'Eve Wilson',
-                'username' => 'eve_mobile',
-                'email' => 'eve@example.com',
-                'phone' => '+33123456794',
-                'password' => Hash::make('password'),
-                'bio' => 'Développeuse Mobile React Native',
-                'avatar' => '/api/placeholder/64/64',
+                'name' => 'Aïcha Ba',
+                'username' => 'aicha_mobile',
+                'email' => 'aicha.ba@example.com',
+                'phone' => '+221701234571',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Développeuse Mobile React Native. Créatrice d\'applications innovantes.',
                 'is_online' => true,
-                'last_seen' => now(),
+                'email_verified_at' => now(),
             ],
+            [
+                'name' => 'Cheikh Thiam',
+                'username' => 'cheikh_ai',
+                'email' => 'cheikh.thiam@example.com',
+                'phone' => '+221701234572',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Data Scientist et expert en Intelligence Artificielle. Passionné par l\'innovation technologique.',
+                'is_online' => false,
+                'email_verified_at' => now(),
+            ],
+            [
+                'name' => 'Mariama Diallo',
+                'username' => 'mariama_frontend',
+                'email' => 'mariama.diallo@example.com',
+                'phone' => '+221701234573',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'Développeuse Frontend spécialisée en React et Vue.js. Créatrice d\'interfaces modernes.',
+                'is_online' => true,
+                'email_verified_at' => now(),
+            ],
+            [
+                'name' => 'Ousmane Gueye',
+                'username' => 'ousmane_devops',
+                'email' => 'ousmane.gueye@example.com',
+                'phone' => '+221701234574',
+                'password' => Hash::make('password123'),
+                'avatar' => null,
+                'bio' => 'DevOps Engineer. Expert en déploiement et infrastructure cloud.',
+                'is_online' => false,
+                'email_verified_at' => now(),
+            ]
         ];
 
         foreach ($users as $userData) {
@@ -91,3 +106,4 @@ class UserSeeder extends Seeder
         }
     }
 }
+

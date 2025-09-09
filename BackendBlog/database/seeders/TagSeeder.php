@@ -2,138 +2,66 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Tag;
 
 class TagSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $tags = [
-            [
-                'name' => 'Web Dev',
-                'slug' => 'web-dev',
-                'description' => 'Développement web et technologies frontend/backend',
-                'color' => '#3B82F6',
-            ],
-            [
-                'name' => 'React',
-                'slug' => 'react',
-                'description' => 'Bibliothèque JavaScript pour créer des interfaces utilisateur',
-                'color' => '#61DAFB',
-            ],
-            [
-                'name' => 'Laravel',
-                'slug' => 'laravel',
-                'description' => 'Framework PHP pour le développement web',
-                'color' => '#FF2D20',
-            ],
-            [
-                'name' => 'TypeScript',
-                'slug' => 'typescript',
-                'description' => 'JavaScript avec typage statique',
-                'color' => '#3178C6',
-            ],
-            [
-                'name' => 'Tendances',
-                'slug' => 'tendances',
-                'description' => 'Tendances et nouveautés technologiques',
-                'color' => '#10B981',
-            ],
-            [
-                'name' => 'Tutorial',
-                'slug' => 'tutorial',
-                'description' => 'Tutoriels et guides pratiques',
-                'color' => '#F59E0B',
-            ],
-            [
-                'name' => 'Frontend',
-                'slug' => 'frontend',
-                'description' => 'Développement frontend et interfaces utilisateur',
-                'color' => '#8B5CF6',
-            ],
-            [
-                'name' => 'Backend',
-                'slug' => 'backend',
-                'description' => 'Développement backend et logique métier',
-                'color' => '#EF4444',
-            ],
-            [
-                'name' => 'JavaScript',
-                'slug' => 'javascript',
-                'description' => 'Langage de programmation JavaScript',
-                'color' => '#F7DF1E',
-            ],
-            [
-                'name' => 'PHP',
-                'slug' => 'php',
-                'description' => 'Langage de programmation PHP',
-                'color' => '#777BB4',
-            ],
-            [
-                'name' => 'CSS',
-                'slug' => 'css',
-                'description' => 'Feuilles de style en cascade',
-                'color' => '#1572B6',
-            ],
-            [
-                'name' => 'HTML',
-                'slug' => 'html',
-                'description' => 'Langage de balisage hypertexte',
-                'color' => '#E34F26',
-            ],
-            [
-                'name' => 'Node.js',
-                'slug' => 'nodejs',
-                'description' => 'Runtime JavaScript côté serveur',
-                'color' => '#339933',
-            ],
-            [
-                'name' => 'Vue.js',
-                'slug' => 'vuejs',
-                'description' => 'Framework JavaScript progressif',
-                'color' => '#4FC08D',
-            ],
-            [
-                'name' => 'Angular',
-                'slug' => 'angular',
-                'description' => 'Framework JavaScript pour applications web',
-                'color' => '#DD0031',
-            ],
-            [
-                'name' => 'Python',
-                'slug' => 'python',
-                'description' => 'Langage de programmation Python',
-                'color' => '#3776AB',
-            ],
-            [
-                'name' => 'Docker',
-                'slug' => 'docker',
-                'description' => 'Plateforme de conteneurisation',
-                'color' => '#2496ED',
-            ],
-            [
-                'name' => 'Git',
-                'slug' => 'git',
-                'description' => 'Système de contrôle de version',
-                'color' => '#F05032',
-            ],
-            [
-                'name' => 'API',
-                'slug' => 'api',
-                'description' => 'Interface de programmation d\'application',
-                'color' => '#FF6B6B',
-            ],
-            [
-                'name' => 'Base de données',
-                'slug' => 'base-de-donnees',
-                'description' => 'Gestion et manipulation de données',
-                'color' => '#4ECDC4',
-            ],
+            ['name' => 'React', 'slug' => 'react', 'description' => 'Bibliothèque JavaScript pour créer des interfaces utilisateur'],
+            ['name' => 'Laravel', 'slug' => 'laravel', 'description' => 'Framework PHP pour le développement web'],
+            ['name' => 'JavaScript', 'slug' => 'javascript', 'description' => 'Langage de programmation web'],
+            ['name' => 'TypeScript', 'slug' => 'typescript', 'description' => 'JavaScript avec typage statique'],
+            ['name' => 'PHP', 'slug' => 'php', 'description' => 'Langage de programmation côté serveur'],
+            ['name' => 'Vue.js', 'slug' => 'vue-js', 'description' => 'Framework JavaScript progressif'],
+            ['name' => 'Node.js', 'slug' => 'node-js', 'description' => 'Runtime JavaScript côté serveur'],
+            ['name' => 'MySQL', 'slug' => 'mysql', 'description' => 'Système de gestion de base de données'],
+            ['name' => 'MongoDB', 'slug' => 'mongodb', 'description' => 'Base de données NoSQL'],
+            ['name' => 'Docker', 'slug' => 'docker', 'description' => 'Plateforme de conteneurisation'],
+            ['name' => 'AWS', 'slug' => 'aws', 'description' => 'Services cloud Amazon Web Services'],
+            ['name' => 'Git', 'slug' => 'git', 'description' => 'Système de contrôle de version'],
+            ['name' => 'API', 'slug' => 'api', 'description' => 'Interface de programmation d\'application'],
+            ['name' => 'REST', 'slug' => 'rest', 'description' => 'Architecture de services web'],
+            ['name' => 'GraphQL', 'slug' => 'graphql', 'description' => 'Langage de requête pour API'],
+            ['name' => 'CSS', 'slug' => 'css', 'description' => 'Langage de style pour le web'],
+            ['name' => 'HTML', 'slug' => 'html', 'description' => 'Langage de balisage hypertexte'],
+            ['name' => 'Sass', 'slug' => 'sass', 'description' => 'Préprocesseur CSS'],
+            ['name' => 'TailwindCSS', 'slug' => 'tailwindcss', 'description' => 'Framework CSS utility-first'],
+            ['name' => 'Bootstrap', 'slug' => 'bootstrap', 'description' => 'Framework CSS responsive'],
+            ['name' => 'Webpack', 'slug' => 'webpack', 'description' => 'Module bundler JavaScript'],
+            ['name' => 'Vite', 'slug' => 'vite', 'description' => 'Outil de build rapide'],
+            ['name' => 'Jest', 'slug' => 'jest', 'description' => 'Framework de test JavaScript'],
+            ['name' => 'Cypress', 'slug' => 'cypress', 'description' => 'Framework de test end-to-end'],
+            ['name' => 'Tutorial', 'slug' => 'tutorial', 'description' => 'Guide d\'apprentissage'],
+            ['name' => 'Best Practices', 'slug' => 'best-practices', 'description' => 'Meilleures pratiques de développement'],
+            ['name' => 'Performance', 'slug' => 'performance', 'description' => 'Optimisation des performances'],
+            ['name' => 'Sécurité', 'slug' => 'securite', 'description' => 'Sécurité informatique'],
+            ['name' => 'DevOps', 'slug' => 'devops', 'description' => 'Pratiques de développement et opérations'],
+            ['name' => 'Mobile', 'slug' => 'mobile', 'description' => 'Développement mobile'],
+            ['name' => 'React Native', 'slug' => 'react-native', 'description' => 'Framework mobile React'],
+            ['name' => 'Flutter', 'slug' => 'flutter', 'description' => 'Framework mobile Google'],
+            ['name' => 'Python', 'slug' => 'python', 'description' => 'Langage de programmation polyvalent'],
+            ['name' => 'Django', 'slug' => 'django', 'description' => 'Framework web Python'],
+            ['name' => 'FastAPI', 'slug' => 'fastapi', 'description' => 'Framework web Python moderne'],
+            ['name' => 'PostgreSQL', 'slug' => 'postgresql', 'description' => 'Base de données relationnelle avancée'],
+            ['name' => 'Redis', 'slug' => 'redis', 'description' => 'Base de données en mémoire'],
+            ['name' => 'Elasticsearch', 'slug' => 'elasticsearch', 'description' => 'Moteur de recherche et d\'analyse'],
+            ['name' => 'Kubernetes', 'slug' => 'kubernetes', 'description' => 'Orchestrateur de conteneurs'],
+            ['name' => 'Terraform', 'slug' => 'terraform', 'description' => 'Infrastructure as Code'],
+            ['name' => 'CI/CD', 'slug' => 'ci-cd', 'description' => 'Intégration et déploiement continus'],
+            ['name' => 'Microservices', 'slug' => 'microservices', 'description' => 'Architecture de microservices'],
+            ['name' => 'Serverless', 'slug' => 'serverless', 'description' => 'Architecture sans serveur'],
+            ['name' => 'Blockchain', 'slug' => 'blockchain', 'description' => 'Technologie de chaîne de blocs'],
+            ['name' => 'Cryptocurrency', 'slug' => 'cryptocurrency', 'description' => 'Cryptomonnaies'],
+            ['name' => 'Machine Learning', 'slug' => 'machine-learning', 'description' => 'Apprentissage automatique'],
+            ['name' => 'Deep Learning', 'slug' => 'deep-learning', 'description' => 'Apprentissage profond'],
+            ['name' => 'TensorFlow', 'slug' => 'tensorflow', 'description' => 'Framework de machine learning'],
+            ['name' => 'PyTorch', 'slug' => 'pytorch', 'description' => 'Framework de deep learning'],
+            ['name' => 'Data Science', 'slug' => 'data-science', 'description' => 'Science des données'],
+            ['name' => 'Analytics', 'slug' => 'analytics', 'description' => 'Analyse de données'],
+            ['name' => 'Big Data', 'slug' => 'big-data', 'description' => 'Traitement de grandes données']
         ];
 
         foreach ($tags as $tagData) {
@@ -141,3 +69,4 @@ class TagSeeder extends Seeder
         }
     }
 }
+
